@@ -1,7 +1,3 @@
-# distributed_computing_lab_1
+ОТЧЕТ
 
-task compile & run example
-
-```bash
-gcc -o pi pi.c -lm
-./pi [count of threads] [argument]
+https://docs.google.com/document/d/14_LpNlo36VCk3aFtaNqlfexZfoo_KPxPgH6qv00149s/edit?usp=sharing
