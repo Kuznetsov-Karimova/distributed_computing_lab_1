@@ -8,49 +8,26 @@
 #define DEPTH 1000
 #endif
 
-int ntrials;
-
-struct Data{
+typedef struct {
     unsigned int seed;
     FILE *file;
     pthread_mutex_t *file_mutex;
-};
+} Data;
 
-void nextPoint(struct Point* point, struct Point* startPoint) {
-    float nextX = powf(point->x, 2) - powf(point->y, 2) + startPoint->x;
-    float nextY = point->x * point->y + startPoint->y;
-    point->x = nextX;
-    point->y = nextY;
-};
+/* Global variables */
 
-int isMandel(struct Point* point) {
-    struct Point startPoint = {point->x, point->y}; 
-    for (int iter = 0; iter < DEPTH; ++iter) {
-        if (distFromCenter(point) < 2) {
-            nextPoint(point, &startPoint);
-        } else {
-            return 0;
-        }
-    }
-    return 1;
-};
+int ntrials;
 
-void* mandel(void* data) {
-    struct Data* local_data = (struct Data*)data;
-    while (ntrials) {
-        struct Point point;
-        point.x = -2+4*((float)rand_r(&local_data->seed))/RAND_MAX;
-        point.y = -2+4*((float)rand_r(&local_data->seed))/RAND_MAX;
-        if (isMandel(&point)) {
-            pthread_mutex_lock(local_data->file_mutex);
-            if (ntrials > 0) {
-                --ntrials;
-                fprintf(local_data->file, "%lf,%lf\n", point.x, point.y);
-            }
-            pthread_mutex_unlock(local_data->file_mutex);;
-        }
-    }
-}
+/* Functions */
+
+void next_point(Point* point, Point* startPoint);
+
+int is_Mandel(Point* point);
+
+void* mandel(void* data);
+
+/*-----------------------------------------------------------------*/
+
 int main(int argc, char *argv[]) {
 
     if (argc != 3) {
@@ -65,7 +42,7 @@ int main(int argc, char *argv[]) {
     pthread_mutex_init(&file_mutex, NULL);
 
     pthread_t* thread_handles = malloc(nthreads * sizeof(pthread_t));
-    struct Data* data = malloc(nthreads * sizeof(struct Data));
+    Data* data = malloc(nthreads * sizeof(Data));
 
     double start, end;
     GET_TIME(start);
@@ -75,8 +52,7 @@ int main(int argc, char *argv[]) {
         data[i].file = file;
         data[i].file_mutex = &file_mutex;
         pthread_create(&thread_handles[i], NULL, mandel, &data[i]);
-    } 
-
+    }
 
     for (int i = 0; i < nthreads; ++i) {
         pthread_join(thread_handles[i], NULL);
@@ -85,7 +61,47 @@ int main(int argc, char *argv[]) {
     pthread_mutex_destroy(&file_mutex);
 
     GET_TIME(end);
+
     printf("Time: %f\n", end - start);
 
     return 0;
+}
+
+/*-----------------------------------------------------------------*/
+
+void next_point(Point* point, Point* startPoint) {
+    float nextX = powf(point->x, 2) - powf(point->y, 2) + startPoint->x;
+    float nextY = point->x * point->y + startPoint->y;
+    point->x = nextX;
+    point->y = nextY;
+};
+
+int is_Mandel(Point* point) {
+    Point startPoint = {point->x, point->y}; 
+    for (int iter = 0; iter < DEPTH; ++iter) {
+        if (distFromCenter(point) < 2) {
+            next_point(point, &startPoint);
+        } else {
+            return 0;
+        }
+    }
+    return 1;
+};
+
+void* mandel(void* data) {
+    Data* local_data = (Data*)data;
+    while (ntrials) {
+        Point point;
+        point.x = -2+4*((float)rand_r(&local_data->seed))/RAND_MAX;
+        point.y = -2+4*((float)rand_r(&local_data->seed))/RAND_MAX;
+        if (is_Mandel(&point)) {
+            pthread_mutex_lock(local_data->file_mutex);
+            if (ntrials > 0) {
+                --ntrials;
+                fprintf(local_data->file, "%lf,%lf\n", point.x, point.y);
+            }
+            pthread_mutex_unlock(local_data->file_mutex);;
+        }
+    }
+    return NULL;
 }

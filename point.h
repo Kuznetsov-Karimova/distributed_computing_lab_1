@@ -3,12 +3,12 @@
 
 #include <math.h>
 
-struct Point{
+typedef struct {
     float x;
     float y;
-};
+} Point;
 
-float distFromCenter(struct Point* point) {
+float distFromCenter(Point* point) {
     return sqrtf(powf(point->x, 2) + powf(point->y, 2));
 };
 
