@@ -63,24 +63,25 @@ int main(int argc, char *argv[]) {
     GET_TIME(end);
 
     printf("Time: %f\n", end - start);
-
+    free(thread_handles);
+    free(data);
     return 0;
 }
 
 /*-----------------------------------------------------------------*/
 
-void next_point(Point* point, Point* startPoint) {
+void next_point(Point* startPoint, Point* point) {
     float nextX = powf(point->x, 2) - powf(point->y, 2) + startPoint->x;
     float nextY = point->x * point->y + startPoint->y;
     point->x = nextX;
     point->y = nextY;
 };
 
-int is_Mandel(Point* point) {
-    Point startPoint = {point->x, point->y}; 
+int is_Mandel(Point* startPoint) {
+    Point point = {startPoint->x, startPoint->y}; 
     for (int iter = 0; iter < DEPTH; ++iter) {
-        if (distFromCenter(point) < 2) {
-            next_point(point, &startPoint);
+        if (distFromCenter(startPoint) < 2) {
+            next_point(startPoint, &point);
         } else {
             return 0;
         }
